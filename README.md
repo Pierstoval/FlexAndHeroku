@@ -272,7 +272,7 @@ Buildpack set. Next release on stark-escarpment-87840 will use heroku/php.
 Run git push heroku master to create a new release using this buildpack.
 ```
 
-**Note:** En réalité nous n'avons pas vraiment besoin d'installer ce buildpack, puisqu'il est détecté automatiquement
+**Note :** En réalité nous n'avons pas vraiment besoin d'installer ce buildpack, puisqu'il est détecté automatiquement
 grâce à la présence d'un fichier `composer.json` à la racine de notre projet. Mais nous l'ajoutons manuellement histoire
 de faire les choses proprement.
 
@@ -288,7 +288,7 @@ Et l'url vient de nous être donnée, alors un simple copier/coller suffit :
 $ git remote add heroku https://git.heroku.com/stark-escarpment-87840.git
 ```
 
-**Note:** nommer la remote `heroku` permet à Heroku CLI de détecter automatiquement le projet en cours sans avoir à le
+**Note :** nommer la remote `heroku` permet à Heroku CLI de détecter automatiquement le projet en cours sans avoir à le
 spécifier en tant qu'argument à chaque commande.
 
 ### Accéder à la production
@@ -419,7 +419,7 @@ Symfony operations: 3 recipes (7d946f30d2601a4530d4c10790aefad1)
 (...)
 ```
 
-**Note:** Le package `symfony/orm-pack` dépend normalement de `doctrine/doctrine-migrations-bundle`, mais 
+**Note :** Le package `symfony/orm-pack` dépend normalement de `doctrine/doctrine-migrations-bundle`, mais 
 `doctrine/migrations` n'est pas encore compatible avec Symfony 4.0. Cependant, la branche `master` l'est, donc
 utilisons-la en attendant la prochaine version 1.6 du package.
 Lorsque la version 1.6 sera sortie, il suffira de faire `composer remove doctrine/migrations && composer update` ☺.
@@ -452,7 +452,7 @@ Use heroku addons:docs heroku-postgresql to view documentation
 Du coup, Heroku va utiliser un autre serveur (qui ne nous concerne pas) pour gérer la base de données, ce qui facilite
 grandement la gestion & migration de l'application tout en laissant la BDD de son côté.
 
-**Note:** Par défaut j'utilise PostgreSQL ici, tout simplement parce qu'Heroku dispose de facilités d'utilisations et de
+**Note :** Par défaut j'utilise PostgreSQL ici, tout simplement parce qu'Heroku dispose de facilités d'utilisations et de
 monitoring avec ce SGBD, mais il existe aussi de très bons add-ons pour MySQL ou MariaDB, comme ClearDB ou JawsDB, qui
 sont eux aussi des services cloud externes, et qui peuvent être intégrés à Heroku tout comme `heroku-postgresql`.<br>
 Il faut donc **obligatoirement** modifier nos fichiers `.env` et `.env.dist` pour changer le driver PDO de `mysql`
@@ -469,7 +469,7 @@ APP_SECRET:   Wh4t3v3r
 DATABASE_URL: postgres://...  <--- Cette variable vient d'être rajoutée par l'addon heroku-postgresql
 ```
 
-**Note:** Les autres add-ons cités plus haut pour MySQL et MariaDB peuvent avoir une variable d'environnement avec un
+**Note :** Les autres add-ons cités plus haut pour MySQL et MariaDB peuvent avoir une variable d'environnement avec un
 nom différent. Libre à vous de changer vos fichiers `.env`, votre configuration Doctrine ou votre configuration Heroku,
 afin de l'utiliser.
 
@@ -504,7 +504,7 @@ $ php bin/console doctrine:database:create
 $ php bin/console doctrine:migrations:diff
 ```
 
-**Note:** Cette commande fonctionne **uniquement** si vous avez une **base de données entièrement vide**.
+**Note :** Cette commande fonctionne **uniquement** si vous avez une **base de données entièrement vide**.
 Dans le doute, si vous voulez être sûr que la migration créée est correcte, vous pouvez exécuter cette suite de
 commandes:
 
@@ -712,3 +712,44 @@ On peut en tout cas exécuter notre tâche :
 * Une fois par jour à une heure/demi-heure donnée.
 * Toutes les heures, à la dizaine de minutes donnée.
 * Toutes les 10mn à partir du moment où la tâche est créée / mise à jour.
+
+Une fois votre commande configurée, vous pouvez attendre quelques minutes que celle-ci s'exécute.
+
+Lorsque le temps est passé, vous pouvez voir les logs:
+
+```
+$ heroku logs | grep scheduler 
+2017-12-01T21:02:56.302995+00:00 heroku[scheduler.8108]: Starting process with command `php bin/console app:simple-message`
+2017-12-01T21:02:56.979408+00:00 heroku[scheduler.8108]: State changed from starting to up
+2017-12-01T21:02:58.362544+00:00 app[scheduler.8108]: [2017-12-01 21:02:58] Stdout message
+2017-12-01T21:02:58.482250+00:00 app[scheduler.8108]: [2017-12-01 21:02:58] Stderr message
+2017-12-01T21:02:58.486752+00:00 heroku[scheduler.8108]: Process exited with status 0
+2017-12-01T21:02:58.504268+00:00 heroku[scheduler.8108]: State changed from up to complete
+```
+
+On voit bien nos messages `Stdout` et `Stderr` s'afficher !
+
+Et voilà, nous avons une routine correctement configurée !
+
+**Note :** Attention au temps d'exécution de vos commandes, car celui-ci sera décompté du temps consommé de votre dyno,
+qui peut vous être facturé selon votre abonnement. Ceci dit, une commande qui dure 5 secondes, exécutée 144 fois par 
+jour, cela fait 720 secondes de consommées. Ce n'est pas grand chose comparé aux 2592000 secondes pour un serveur web
+allumé 24h/24... 
+
+### Améliorer son environnement Heroku
+
+Heroku étant plein d'addons, pour la plupart gratuits, je vous en recommande quelques-uns :
+
+* [Autobus](https://elements.heroku.com/addons/autobus), un système de backups pour votre base de données, très pratique
+et dont le plan gratuit est idéal pour les projets simples.
+* [Blackfire](https://elements.heroku.com/addons/blackfire) (beta), l'indémodable outil de profilage pour tous nos
+projets PHP !
+* [Mailgun](https://elements.heroku.com/addons/mailgun), excellent outil d'envoi d'emails, qui peut être directement
+branché à Swiftmailer grâce à la variable d'environnement `MAILER_URL`, et dont le plan gratuit avec 400 mails par jour
+(soit 12000 par mois) est largement suffisant pour la plupart des projets (le plan suivant étant à 50000 mails par mois...).
+* [Papertrail](https://elements.heroku.com/addons/papertrail), outil de monitoring des logs de tous vos dynos, très
+utile pour garder un œil sur vos erreurs PHP. Il peut vous envoyer un mail lorsqu'il y a des erreurs à intervalles
+réguliers, permet de créer des filtres pour les types d'erreurs, de commandes, etc.. Le gros avantage c'est que nous
+n'avons même pas besoin de configurer monolog autrement qu'en lui disant de tout envoyer vers `php://stderr` !
+* [Deploy Hooks](https://devcenter.heroku.com/articles/deploy-hooks), un bon moyen d'envoyer une petite notification de
+succès d'un déploiement sur Slack, IRC, par email ou même avec une requête HTTP à n'importe quelle URL. 
