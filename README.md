@@ -119,7 +119,7 @@ Allez, maintenant qu'on sait en quoi consistent les outils que nous allons utili
 Tout d'abord, on crée le projet quelque part sur notre machine :
 
 ```
-$ composer create-project symfony/skeleton:4.0.*@beta project
+$ composer create-project symfony/skeleton:^4.0 my_project
 ```
 
 Le package `symfony/skeleton` ne contient qu'une seule chose : un fichier `composer.json` déterminant quelques
@@ -183,9 +183,13 @@ Ce contrôleur sera nécessaire, car désormais il n'y a plus de contrôleur par
 namespace App\Controller;
 
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
 
 class DefaultController
 {
+    /**
+     * @Route("/", name="homepage")
+     */
     public function index(): Response
     {
         return new Response('It works! ☺');
@@ -336,7 +340,7 @@ web: vendor/bin/heroku-php-nginx public/
 Cela suffira à Heroku pour qu'il puisse exécuter notre code.
 
 Il est possible de personnaliser le vhost nginx ainsi que la configuration de php-fpm, mais c'est juste l'affaire d'un
-argument spécifiant le fichier utilisé, et nous n'en avons pas besoin pour l'instnat, nous verrons donc ça plus tard.
+argument spécifiant le fichier utilisé, et nous n'en avons pas besoin pour l'instant, nous verrons donc ça plus tard.
 
 ### Déployer le projet sur Heroku
 
