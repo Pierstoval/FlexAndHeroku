@@ -412,7 +412,7 @@ D'abord, installer Doctrine ORM :
 $ composer require orm "doctrine/migrations:^1.6@dev"
 Using version ^1.0 for symfony/orm-pack
 (...)
-Symfony operations: 3 recipes (b7084ef6b3817e37b7bb7d94e1bb6cbe)
+Symfony operations: 3 recipes (7d946f30d2601a4530d4c10790aefad1)
   - Configuring doctrine/doctrine-cache-bundle (1.3.2): From auto-generated recipe
   - Configuring doctrine/doctrine-bundle (1.6): From github.com/symfony/recipes:master
   - Configuring doctrine/doctrine-migrations-bundle (1.2): From github.com/symfony/recipes:master
@@ -633,3 +633,82 @@ remote:          ++ 2 sql queries
 ```
 
 Les migrations ont été exécutées sur la base de production gérée par Heroku, tout est ok !
+
+### Exécuter des `cron` avec Heroku et Symfony
+
+Tout d'abord, il nous faut une commande à exécuter, créons-en donc une simple:
+
+```php
+<?php
+
+namespace App\Command;
+
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+
+class SimpleMessageCommand extends Command
+{
+    protected static $defaultName = 'app:simple-message';
+
+    protected function configure()
+    {
+        $this->setDescription('Simply sends a message to stdout and stderr.');
+    }
+
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        $now = date('Y-m-d H:i:s');
+        $output->writeln("[$now] Stdout message");
+        fwrite(STDERR, "[$now] Stderr message");
+    }
+}
+``` 
+
+L'idée c'est de pouvoir consulter les logs de Heroku pour voir ces messages.
+
+**Pro tip:** Depuis Symfony 3.4, on peut utiliser la propriété statique `Command::$defaultName`. Si notre commande est
+définie en tant que service, cela permettra à Symfony d'optimiser le chargement de la console et la compilation du
+container en n'instanciant pas la commande.
+
+#### Installer Heroku Scheduler
+
+Heroku Scheduler est l'add-on qui va nous permettre d'exécuter des tâches à des intervalles réguliers personnalisables.
+
+Installons-le dans notre projet :
+
+```
+$ heroku addons:create scheduler:standard
+Creating scheduler:standard on stark-escarpment-87840... free
+This add-on consumes dyno hours, which could impact your monthly bill. To learn more:
+http://devcenter.heroku.com/addons_with_dyno_hour_usage
+
+To manage scheduled jobs run:
+heroku addons:open scheduler
+
+Created scheduler-reticulated-65091
+Use heroku addons:docs scheduler to view documentation
+```
+
+Et maintenant on va ouvrir cet add-on pour le personnaliser :
+
+```
+$ heroku addons:open scheduler
+```
+
+Vous devriez voir ceci:
+
+![Scheduler home](_presentation/scheduler_home.jpg)
+
+Le bouton `Add new job` va nous permettre de faire exactement ce qu'il nous faut !
+
+![Scheduler job](_presentation/scheduler_job.jpg)
+
+Alors la fréquence est clairement moins flexible qu'une _vraie_ tâche `cron`, mais pour les usages les plus simples, ça
+reste la meilleure solution. Sinon, il faudra un worker, ce qui est plus complexe à mettre en place (et est plus cher). 
+
+On peut en tout cas exécuter notre tâche :
+
+* Une fois par jour à une heure/demi-heure donnée.
+* Toutes les heures, à la dizaine de minutes donnée.
+* Toutes les 10mn à partir du moment où la tâche est créée / mise à jour.
