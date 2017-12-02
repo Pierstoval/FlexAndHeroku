@@ -753,3 +753,22 @@ réguliers, permet de créer des filtres pour les types d'erreurs, de commandes,
 n'avons même pas besoin de configurer monolog autrement qu'en lui disant de tout envoyer vers `php://stderr` !
 * [Deploy Hooks](https://devcenter.heroku.com/articles/deploy-hooks), un bon moyen d'envoyer une petite notification de
 succès d'un déploiement sur Slack, IRC, par email ou même avec une requête HTTP à n'importe quelle URL. 
+
+### Conclusion
+
+Heroku est un PaaS très simple à utiliser, mais surtout, il est excellent pour le test, car il suffit d'utilier des
+[review apps](https://devcenter.heroku.com/articles/github-integration-review-apps) pour la preprod, et étant donné que
+la preprod n'est pas utilisée non-stop, on peut largement utiliser l'abonnement gratuit pour ça !
+
+Pour l'upload et le stockage de fichiers, il vous faudra utiliser Amazon S3 et vous référer à la documentation en
+[suivant ce lien](https://devcenter.heroku.com/articles/s3) et utiliser les références à S3 dans votre code.
+
+---
+
+Chez [Agate Éditions](https://www.studio-agate.com/fr/), nous avons fait le choix d'utiliser Heroku pour notre projet,
+une application monolithique multi-domaines qui héberge des portails et des sites relatifs aux jeux de rôle du studio,
+notamment un gestionnaire de personnages et une application de cartographie interactive.
+
+Merci de cette lecture ! Vous pouvez me retrouver un peu partout sur le web avec le pseudo `@pierstoval`!
+
+## 🌑 🌘 🌗 🌖 🌕 🌔 🌓 🌒 🌑
