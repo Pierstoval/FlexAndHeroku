@@ -276,25 +276,72 @@ $ heroku config:set APP_ENV=prod APP_SECRET=Wh4t3v3r
 
 ### Préparons notre projet pour qu'il soit compatible avec Heroku
 
-En premier lieu il faut créer un `Procfile`.
+Nous allons maintenant configurer le projet pour l'envoyer sur Heroku.
+
+Comme toute application web, nous avons besoin d'un serveur web : ça tombe bien, le buildpack PHP nous permet d'utiliser Apache ou Nginx directement !
+
+Dans un premier temps, configurons Nginx.
+
+#### Créer une configuration nginx
+
+Vous pouvez créer un fichier `heroku/nginx_host.conf` et y mettre ceci :
+
+```
+# Try to serve file directly, fallback to rewrite.
+location / {
+    try_files $uri @rewriteapp;
+}
+
+# Rewrite all to index.php. This will trigger next location.
+location @rewriteapp {
+    rewrite ^(.*)$ /index.php/$1 last;
+}
+
+# Redirect everything to Heroku.
+# In development, replace this with your php-fpm/php-cgi proxy.
+location ~ ^/index\.php(/|$) {
+    try_files @heroku-fcgi @heroku-fcgi;
+    internal;
+}
+
+# Return 404 for all other php files not matching the front controller.
+# This prevents access to other php files you don't want to be accessible.
+location ~ \.php$ {
+    return 404;
+}
+```
+
+Cette configuration fait plusieurs choses :
+
+* Tente de délivrer le fichier demandé, s'il existe.
+* Sinon, renvoie l'intégralité de la requête HTTP au fichier `index.php`, qui sera délégué au processus FCGI configuré
+par Heroku (un processus `php-fpm`).
+* Si un autre fichier PHP est demandé, on renvoie une 404. Cela permet de faire en sorte qu'aucun fichier PHP ne soit
+directement exécuté et/ou visible.
+
+#### Créer le Procfile
 
 Le `Procfile` est un fichier qui décrit les différents dynos que vous allez posséder dans votre projet.
 
 Chaque dyno sera comptabilisé dans le temps de consommation relatif à votre abonnement.
 
-Ici nous n'avons besoin que d'un seul dyno, en l'occurence un dyno de type `web`.
+Ici nous n'avons besoin que d'un seul dyno, en l'occurence un dyno de type `web` (pour rappel, le nom du dyno est unique, donc nous ne pouvons avoir qu'un seul dyno nommé `web`).
 
 Chaque ligne du fichier se compose de deux informations : le type de dyno et le script à exécuter.
 
 Le script correspondra ici à celui documenté dans le buildpack PHP, en l'occurrence une instance nginx suivie du nom du dossier servant de point d'entrée au vhost.
 
+Nous devons également rajouter la configuration de nginx précédemment créée, nécessaire pour utiliser Symfony (sinon, seule la page d'accueil sera utilisable!).
+
 ```
-web: vendor/bin/heroku-php-nginx public/
+web: vendor/bin/heroku-php-nginx -C heroku/nginx.conf public/
 ```
 
 Cela suffira à Heroku pour qu'il puisse exécuter notre code.
 
-Il est possible de personnaliser le vhost nginx ainsi que la configuration de php-fpm, mais c'est juste l'affaire d'un argument spécifiant le fichier utilisé, et nous n'en avons pas besoin pour l'instant.
+Il est possible de personnaliser également la configuration de php-fpm, ou même de complètement surcharger toute la configuration de nginx, mais c'est juste l'affaire d'un argument spécifiant le fichier utilisé, et nous n'en avons pas besoin pour l'instant.
+
+Dans le doute, [la documentation sur Heroku](https://devcenter.heroku.com/articles/custom-php-settings) vous sera utile pour savoir comment personnaliser vos paramètres.
 
 ### Déployer le projet sur Heroku
 
